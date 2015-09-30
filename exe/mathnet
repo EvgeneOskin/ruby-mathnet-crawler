@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'commander'
+require 'parallel'
+require 'net/http'
+require 'mathnet/crawler'
+
+class MyApplication
+  include Commander::Methods
+
+  def run
+    program :name, 'Mathnet crawler.'
+    program :version, '1.0.0'
+    program :description, 'Stupid command that prints foo or bar.'
+
+    command :'download all' do |c|
+      c.syntax = 'download all'
+      c.description = 'Download all articals'
+      c.action do |args, options|
+        journals = list_journals
+        issues = list_issues journals
+        articals = list_articals issues
+        say articals.size
+      end
+    end
+
+    run!
+  end
+
+  def list_journals
+    say 'List all journals...'
+    Mathnet::Crawler::Journal.list Mathnet::Crawler::Library.new
+  end
+
+  def list_issues(journals)
+    issues_lists = Parallel.map(journals, :progress => 'List issues') do |journal|
+      begin
+        Mathnet::Crawler::Issue.list journal
+      rescue Net::HTTPServerException
+        say "Rescued! Of list issue for #{journal.title} - #{journal.detail_url}."
+      end
+    end
+    issues_lists.compact.reduce do |initial, item|
+      initial + item
+    end
+  end
+
+  def list_articals(issues)
+    articals_lists = Parallel.map(issues, :progress => 'List articals') do |issue| 
+      begin
+        Mathnet::Crawler::Article.list issue
+      rescue Net::HTTPServerException
+        say "Rescued! Of list articals for #{issue.title} - #{issue.detail_url}."
+      end
+    end
+    articals_lists.compact.reduce do |initial, item|
+      initial + item
+    end
+  end
+end
+
+MyApplication.new.run if $PROGRAM_NAME == __FILE__

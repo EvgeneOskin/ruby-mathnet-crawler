@@ -68,6 +68,7 @@ module Mathnet # :nodoc:
       @detail_url_reqexp = %r{/php/journal.phtml}
 
       extend Entry
+      attr_reader :detail_url, :title
 
       def initialize(tag)
         @title = tag['title']
@@ -85,6 +86,7 @@ module Mathnet # :nodoc:
       @detail_url_reqexp = %r{/php/archive.phtml?.*wshow=issue}
 
       extend Entry
+      attr_reader :detail_url, :title
 
       def initialize(tag)
         @title = tag['title']
@@ -100,6 +102,7 @@ module Mathnet # :nodoc:
       @detail_url_reqexp = %r{/rus/}
 
       extend Entry
+      attr_reader :detail_url, :title
 
       def initialize(tag)
         @title = tag.text

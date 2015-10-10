@@ -4,6 +4,7 @@ require 'commander'
 require 'parallel'
 require 'net/http'
 require 'mathnet/crawler'
+require 'exponential_backoff'
 
 class MyApplication
   include Commander::Methods
@@ -29,15 +30,15 @@ class MyApplication
 
   def list_journals
     say 'List all journals...'
-    Mathnet::Crawler::Journal.list Mathnet::Crawler::Library.new
+    process_backoff do 
+      Mathnet::Crawler::Journal.list Mathnet::Crawler::Library.new
+    end
   end
 
   def list_issues(journals)
     issues_lists = Parallel.map(journals, :progress => 'List issues') do |journal|
-      begin
+      process_backoff do 
         Mathnet::Crawler::Issue.list journal
-      rescue Net::HTTPServerException
-        say "Rescued! Of list issue for #{journal.title} - #{journal.detail_url}."
       end
     end
     issues_lists.compact.reduce do |initial, item|
@@ -47,15 +48,30 @@ class MyApplication
 
   def list_articals(issues)
     articals_lists = Parallel.map(issues, :progress => 'List articals') do |issue| 
-      begin
+      process_backoff do 
         Mathnet::Crawler::Article.list issue
-      rescue Net::HTTPServerException
-        say "Rescued! Of list articals for #{issue.title} - #{issue.detail_url}."
       end
     end
     articals_lists.compact.reduce do |initial, item|
       initial + item
     end
+  end
+
+  def process_backoff(&block)
+    backoff.until_success do
+      begin
+        result = block
+      rescue Net::HTTPServerException
+        result = false 
+      end
+      return result
+    end
+  end
+
+  def backoff
+    minimal_interval = 0.1
+    maximal_elapsed_time = 10.0
+    ExponentialBackoff.new(minimal_interval, maximal_elapsed_time)
   end
 end
 

@@ -127,7 +127,9 @@ module Mathnet # :nodoc:
       def full_text(&block)
         client = HTTPClient.new
         payload = client.get full_text_url
-        block.call payload.body
+        if payload['Content-Type'] != 'text/html'
+          block.call payload.body
+        end
       end
     end
   end

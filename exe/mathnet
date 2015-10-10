@@ -6,6 +6,8 @@ require 'net/http'
 require 'mathnet/crawler'
 require 'exponential_backoff'
 
+require 'pry'
+
 class MyApplication
   include Commander::Methods
 
@@ -20,8 +22,9 @@ class MyApplication
       c.action do |args, options|
         journals = list_journals
         issues = list_issues journals
-        articals = list_articals issues
-        say articals.size
+        articles = list_articals issues
+        binding.pry
+        download_aricles articles
       end
     end
 
@@ -41,7 +44,7 @@ class MyApplication
         Mathnet::Crawler::Issue.list journal
       end
     end
-    issues_lists.compact.reduce do |initial, item|
+    issues_lists.reduce do |initial, item|
       initial + item
     end
   end
@@ -52,15 +55,31 @@ class MyApplication
         Mathnet::Crawler::Article.list issue
       end
     end
-    articals_lists.compact.reduce do |initial, item|
+    articals_lists.reduce do |initial, item|
+      if not item
+        pp 'fuck'
+        return initial
+      end
       initial + item
+    end
+  end
+
+  def download_aricles(articles)
+    Parallel.each(articles, :progress => 'Download texts') do |article|  
+      process_backoff do 
+        article.full_text do |body|
+          pdf = File.new "#{article.title}.pdf", 'w'
+          pdf.write body
+          pdf.close
+        end
+      end
     end
   end
 
   def process_backoff(&block)
     backoff.until_success do
       begin
-        result = block
+        result = block.call()
       rescue Net::HTTPServerException
         result = false 
       end
@@ -70,8 +89,8 @@ class MyApplication
 
   def backoff
     minimal_interval = 0.1
-    maximal_elapsed_time = 10.0
-    ExponentialBackoff.new(minimal_interval, maximal_elapsed_time)
+    maximal_elapsed_time = 0.0
+    ExponentialBackoff.new minimal_interval, maximal_elapsed_time
   end
 end
 

@@ -8,7 +8,7 @@ require 'exponential_backoff'
 
 require 'pry'
 
-class MyApplication
+class MathnetApplication
   include Commander::Methods
 
   def run
@@ -105,4 +105,4 @@ class MyApplication
   end
 end
 
-MyApplication.new.run if $PROGRAM_NAME == __FILE__
+MathnetApplication.new.run if $PROGRAM_NAME == __FILE__

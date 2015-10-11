@@ -14,8 +14,8 @@ class MathnetApplication
   def run
     program :name, 'Mathnet crawler.'
     program :version, Mathnet::Crawler::VERSION
-    program :description, 'Stupid command that prints foo or bar.'
-
+    program :description, 'Command that act like missed mathnet client.'
+    
     command :'download all' do |c|
       c.syntax = 'download all'
       c.description = 'Download all articals'

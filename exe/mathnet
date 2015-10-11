@@ -6,8 +6,6 @@ require 'net/http'
 require 'mathnet/crawler'
 require 'exponential_backoff'
 
-require 'pry'
-
 class MathnetApplication
   include Commander::Methods
 

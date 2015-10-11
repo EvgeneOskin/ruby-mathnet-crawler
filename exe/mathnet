@@ -23,7 +23,9 @@ class MyApplication
         journals = list_journals
         issues = list_issues journals
         articles = list_articals issues
-        binding.pry
+        if not Dir.exist? 'mathnet'
+          Dir.mkdir 'mathnet'
+        end
         download_aricles articles
       end
     end
@@ -57,7 +59,6 @@ class MyApplication
     end
     articals_lists.reduce do |initial, item|
       if not item
-        pp 'fuck'
         return initial
       end
       initial + item
@@ -66,9 +67,10 @@ class MyApplication
 
   def download_aricles(articles)
     Parallel.each(articles, :progress => 'Download texts') do |article|  
+      pdf_path = File.join 'mathnet', "#{article.title}.pdf"
       process_backoff do 
         article.full_text do |body|
-          pdf = File.new "#{article.title}.pdf", 'w'
+          pdf = File.new pdf_path, 'w'
           pdf.write body
           pdf.close
         end
@@ -89,7 +91,7 @@ class MyApplication
 
   def backoff
     minimal_interval = 0.1
-    maximal_elapsed_time = 0.0
+    maximal_elapsed_time = 60.0
     ExponentialBackoff.new minimal_interval, maximal_elapsed_time
   end
 end

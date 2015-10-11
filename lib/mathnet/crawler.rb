@@ -15,7 +15,7 @@ module Mathnet # :nodoc:
           @detail_url_reqexp.match tag['href']
         end
         links.collect do |tag|
-          new tag
+          new parent, tag
         end
       end
     end
@@ -70,7 +70,8 @@ module Mathnet # :nodoc:
       extend Entry
       attr_reader :detail_url, :title
 
-      def initialize(tag)
+      def initialize(parent, tag)
+        @parent = parent
         @title = tag['title']
         @detail_url = tag['href']
         detail_query = URI(@detail_url).query
@@ -88,13 +89,18 @@ module Mathnet # :nodoc:
       extend Entry
       attr_reader :detail_url, :title
 
-      def initialize(tag)
+      def initialize(parent, tag)
+        @parent = parent
         @title = tag['title']
         @detail_url = tag['href']
       end
 
       def children_url
         @detail_url
+      end
+
+      def journal_title
+        @parent.title
       end
     end
 
@@ -104,7 +110,8 @@ module Mathnet # :nodoc:
       extend Entry
       attr_reader :detail_url, :title
 
-      def initialize(tag)
+      def initialize(parent, tag)
+        @parent = parent
         @title = tag.text
         @detail_url = tag['href']
         @pdf_url_reqexp = %r{/php/getFT.phtml}
@@ -131,6 +138,10 @@ module Mathnet # :nodoc:
           block.call payload.body
         end
       end
+
+      def journal_title
+        @parent.journal_title
+      end 
     end
   end
 end

@@ -16,15 +16,25 @@ class MathnetApplication
     
     command :'download all' do |c|
       c.syntax = 'download all'
-      c.description = 'Download all articals'
+      c.description = 'Download all articals.'
       c.action do |args, options|
         journals = list_journals
         issues = list_issues journals
         articles = list_articals issues
-        if not Dir.exist? 'mathnet'
-          Dir.mkdir 'mathnet'
-        end
         download_aricles articles
+      end
+    end
+
+    command :articles do |c|
+      c.syntax = 'articles'
+      c.description = 'List articles per journal.'
+      c.action do |args, options|
+        journals = list_journals
+        issues = list_issues journals
+        articles = list_articals issues
+        articles.each do |article|
+          say "#{article.journal_title}/#{article.title}"
+        end
       end
     end
 

@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors = ['EvgeneOskin']
   spec.email = ['eoskin@crystalnix.com']
 
-  spec.summary = %(TODO: Write a short summary, because Rubygems requires one.)
-  spec.description = %(TODO: Write a longer description or delete this line.)
-  spec.homepage = "TODO: Put your gem's website or public repo URL here."
+  spec.summary = 'Tool kit to operate with mathnet.ru'
+  spec.description = 'The Library provides API and CLI to operate with mathnet.ru.'
+  spec.homepage = 'https://github.com/EvgeneOskin/ruby-mathnet-crawler'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
   # delete this section to allow pushing this gem to any host.
@@ -29,8 +29,10 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'commander', '~> 4.3 '
-  spec.add_dependency 'nokogiri', '~> 1.6.6'
+  spec.add_dependency 'commander', '~> 4.3'
+  spec.add_dependency 'nokogiri', '~> 1.6'
+  spec.add_dependency 'parallel', '~> 1.3'
+  spec.add_dependency 'exponential-backoff'
   spec.add_development_dependency 'bundler', '~> 1.10'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rubocop', '~> 0.34.2'

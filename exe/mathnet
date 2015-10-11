@@ -30,11 +30,20 @@ class MyApplication
       end
     end
 
+    command :journals do |c|
+      c.syntax = 'journals'
+      c.description = 'List journals on mathnet.'
+      c.action do |args, options|
+        journals = list_journals
+        journals.each do |journal|
+          say journal.title
+        end
+      end
+    end
     run!
   end
 
   def list_journals
-    say 'List all journals...'
     process_backoff do 
       Mathnet::Crawler::Journal.list Mathnet::Crawler::Library.new
     end

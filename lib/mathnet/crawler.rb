@@ -130,7 +130,7 @@ module Mathnet # :nodoc:
       def full_text_url
         client = HTTPClient.new
         document = client.get_document @detail_url
-        links = document.css(Entry::CSS_FILTER).select do |tag|
+        links = document.css(Entry::Listable::CSS_FILTER).select do |tag|
           @pdf_url_reqexp.match tag['href']
         end
         fail ArgumentError, 'there is no full text link.' if links.empty?

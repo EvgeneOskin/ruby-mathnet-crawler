@@ -9,6 +9,12 @@ require 'exponential_backoff'
 class MathnetApplication
   include Commander::Methods
 
+  def initialize
+    @minimal_interval = 1.0
+    @maximal_elapsed_time = 600.0
+    @base_dir = 'mathnet'
+  end
+
   def run
     program :name, 'Mathnet crawler.'
     program :version, Mathnet::Crawler::VERSION
@@ -84,13 +90,14 @@ class MathnetApplication
 
   def download_aricles(articles)
     Parallel.each(articles, :progress => 'Download texts') do |article|  
-      pdf_path = File.join 'mathnet', "#{article.title}.pdf"
+      pdf_path = article_path article
       process_backoff do 
         article.full_text do |body|
           pdf = File.new pdf_path, 'w'
           pdf.write body
           pdf.close
         end
+        true
       end
     end
   end
@@ -106,10 +113,16 @@ class MathnetApplication
     end
   end
 
+  def article_path(article)
+    directory = File.join @base_dir, article.journal_title 
+    if not Dir.exist? directory
+      FileUtils.mkdir_p directory   
+    end
+    File.join directory, "#{article.title}.pdf"
+  end
+
   def backoff
-    minimal_interval = 0.1
-    maximal_elapsed_time = 60.0
-    ExponentialBackoff.new minimal_interval, maximal_elapsed_time
+    ExponentialBackoff.new @minimal_interval, @maximal_elapsed_time
   end
 end
 

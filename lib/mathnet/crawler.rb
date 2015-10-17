@@ -5,18 +5,24 @@ require 'nokogiri'
 
 module Mathnet # :nodoc:
   module Crawler # :nodoc:
-    module Entry
-      CSS_FILTER = 'a.SLink'
+    class Entry
+      module Listable 
+        CSS_FILTER = 'a.SLink'
 
-      def list(parent)
-        client = HTTPClient.new
-        document = client.get_document parent.children_url
-        links = document.css(CSS_FILTER).select do |tag|
-          @detail_url_reqexp.match tag['href']
+        def list(parent)
+          client = HTTPClient.new
+          document = client.get_document parent.children_url
+          links = document.css(CSS_FILTER).select do |tag|
+            @detail_url_reqexp.match tag['href']
+          end
+          links.collect do |tag|
+            new parent, tag
+          end
         end
-        links.collect do |tag|
-          new parent, tag
-        end
+      end
+      
+      def title
+        @title.delete("\r\n").delete("\n")
       end
     end
 
@@ -64,11 +70,11 @@ module Mathnet # :nodoc:
       end
     end
 
-    class Journal
+    class Journal < Entry
       @detail_url_reqexp = %r{/php/journal.phtml}
 
-      extend Entry
-      attr_reader :detail_url, :title
+      extend Entry::Listable
+      attr_reader :detail_url
 
       def initialize(parent, tag)
         @parent = parent
@@ -83,11 +89,11 @@ module Mathnet # :nodoc:
       end
     end
 
-    class Issue
+    class Issue < Entry
       @detail_url_reqexp = %r{/php/archive.phtml?.*wshow=issue}
 
-      extend Entry
-      attr_reader :detail_url, :title
+      extend Entry::Listable
+      attr_reader :detail_url
 
       def initialize(parent, tag)
         @parent = parent
@@ -104,11 +110,11 @@ module Mathnet # :nodoc:
       end
     end
 
-    class Article
+    class Article < Entry
       @detail_url_reqexp = %r{/rus/}
 
-      extend Entry
-      attr_reader :detail_url, :title
+      extend Entry::Listable
+      attr_reader :detail_url
 
       def initialize(parent, tag)
         @parent = parent
@@ -124,7 +130,7 @@ module Mathnet # :nodoc:
       def full_text_url
         client = HTTPClient.new
         document = client.get_document @detail_url
-        links = document.css(Entry::CSS_FILTER).select do |tag|
+        links = document.css(Entry::Listable::CSS_FILTER).select do |tag|
           @pdf_url_reqexp.match tag['href']
         end
         fail ArgumentError, 'there is no full text link.' if links.empty?

@@ -3,10 +3,14 @@ require 'mathnet/crawler/version'
 require 'net/http'
 require 'nokogiri'
 
-module Mathnet # :nodoc:
-  module Crawler # :nodoc:
+# Major module for Mathnet API.
+module Mathnet
+  # WEB Crawler to simulate mathnet web site via API.
+  module Crawler
+    # Base class for main kind of data on mathnet.
     class Entry
-      module Listable 
+      # Module to store list operations with entries.
+      module Listable
         CSS_FILTER = 'a.SLink'
 
         def list(parent)
@@ -20,12 +24,13 @@ module Mathnet # :nodoc:
           end
         end
       end
-      
+
       def title
         @title.delete("\r\n").delete("\n")
       end
     end
 
+    # Custom client to make http requests.
     class HTTPClient
       def initialize(host: 'www.mathnet.ru')
         @base_uri = URI('http://' + host)
@@ -64,12 +69,14 @@ module Mathnet # :nodoc:
       end
     end
 
+    # Class represent mathnet main page.
     class Library
       def children_url
         '/ej.phtml'
       end
     end
 
+    # Science journal.
     class Journal < Entry
       @detail_url_reqexp = %r{/php/journal.phtml}
 
@@ -89,6 +96,7 @@ module Mathnet # :nodoc:
       end
     end
 
+    # Single issues of journal.
     class Issue < Entry
       @detail_url_reqexp = %r{/php/archive.phtml?.*wshow=issue}
 
@@ -110,6 +118,7 @@ module Mathnet # :nodoc:
       end
     end
 
+    # Single article of issues.
     class Article < Entry
       @detail_url_reqexp = %r{/rus/}
 
@@ -140,14 +149,12 @@ module Mathnet # :nodoc:
       def full_text(&block)
         client = HTTPClient.new
         payload = client.get full_text_url
-        if payload['Content-Type'] != 'text/html'
-          block.call payload.body
-        end
+        block.call payload.body if payload['Content-Type'] != 'text/html'
       end
 
       def journal_title
         @parent.journal_title
-      end 
+      end
     end
   end
 end

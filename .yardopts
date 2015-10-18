@@ -1,0 +1,5 @@
+--no-private
+lib/**/*.rb
+exe/mathnet
+-
+LICENSE

@@ -1,4 +1,6 @@
 # Mathnet::Crawler
+[![Build Status](https://travis-ci.org/EvgeneOskin/ruby-mathnet-crawler.svg)](https://travis-ci.org/EvgeneOskin/ruby-mathnet-crawler)
+[![Coverage Status](https://coveralls.io/repos/EvgeneOskin/ruby-mathnet-crawler/badge.svg?branch=master&service=github)](https://coveralls.io/github/EvgeneOskin/ruby-mathnet-crawler?branch=master)
 
 The Project is ruby library and cli tool to search and download articles from [MathNet](http://mathnet.ru/).
 
@@ -22,7 +24,7 @@ Or install it yourself as:
 $ gem install mathnet-crawler
 ```
 
-## Usagerm
+## Usage
 
 TODO: Write usage instructions here
 

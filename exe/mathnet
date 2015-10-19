@@ -6,69 +6,100 @@ require 'net/http'
 require 'mathnet/crawler'
 require 'exponential_backoff'
 
-require 'pry'
-
-class MyApplication
+# CLI for search and download articles from mathnet site.
+class MathnetApplication
   include Commander::Methods
 
+  # Initialize constances.
+  def initialize
+    @minimal_interval = 1.0
+    @maximal_elapsed_time = 600.0
+    @base_dir = 'mathnet'
+  end
+
+  # Process programm call via command line.
   def run
     program :name, 'Mathnet crawler.'
-    program :version, '1.0.0'
-    program :description, 'Stupid command that prints foo or bar.'
-
-    command :'download all' do |c|
-      c.syntax = 'download all'
-      c.description = 'Download all articals'
-      c.action do |args, options|
-        journals = list_journals
-        issues = list_issues journals
-        articles = list_articals issues
-        if not Dir.exist? 'mathnet'
-          Dir.mkdir 'mathnet'
-        end
-        download_aricles articles
-      end
-    end
-
+    program :version, Mathnet::Crawler::VERSION
+    program :description, 'Command that act like missed mathnet client.'
+    add_download_all_command
+    add_articles_command
+    add_journals_command
     run!
   end
 
+  def add_download_all_command
+    command :'download all' do |c|
+      c.description = 'Download all articals.'
+      c.action do
+        journals = list_journals
+        issues = list_issues journals
+        articles = list_articals issues
+        download_aricles articles
+      end
+    end
+  end
+
+  def add_articles_command
+    command :articles do |c|
+      c.description = 'List articles per journal.'
+      c.action do
+        articles = list_articals list_issues list_journals
+        articles.each do |article|
+          say "#{article.journal_title}/#{article.title}"
+        end
+      end
+    end
+  end
+
+  def add_journals_command
+    command :journals do |c|
+      c.description = 'List journals on mathnet.'
+      c.action do
+        journals = list_journals
+        journals.each do |journal|
+          say journal.title
+        end
+      end
+    end
+  end
+
+  # Return all journals published on mathnet.
   def list_journals
-    say 'List all journals...'
-    process_backoff do 
+    process_backoff do
       Mathnet::Crawler::Journal.list Mathnet::Crawler::Library.new
     end
   end
 
+  # Return all issues that existing in passed journals.
+  # @param journals [Array] of [Mathnet::Crawler::Journals] that having issues.
   def list_issues(journals)
-    issues_lists = Parallel.map(journals, :progress => 'List issues') do |journal|
-      process_backoff do 
-        Mathnet::Crawler::Issue.list journal
-      end
+    issues_lists = Parallel.map(journals, progress: 'List issues') do |journal|
+      process_backoff { Mathnet::Crawler::Issue.list journal }
     end
     issues_lists.reduce do |initial, item|
       initial + item
     end
   end
 
+  # Return all articles that existing in passed issues.
+  # @param issues [Array] of [Mathnet::Crawler::Issue] that having articles.
   def list_articals(issues)
-    articals_lists = Parallel.map(issues, :progress => 'List articals') do |issue| 
-      process_backoff do 
-        Mathnet::Crawler::Article.list issue
-      end
+    articals_lists = Parallel.map(issues, progress: 'List articals') do |issue|
+      process_backoff { Mathnet::Crawler::Article.list issue }
     end
     articals_lists.reduce do |initial, item|
-      if not item
-        return initial
-      end
-      initial + item
+      (item && initial + item) || initial
     end
   end
 
+  # Store full texts of passed articles.
+  # @param articles [Array] of [Mathnet::Crawler::Article] that having
+  #   full texts.
   def download_aricles(articles)
-    Parallel.each(articles, :progress => 'Download texts') do |article|  
-      pdf_path = File.join 'mathnet', "#{article.title}.pdf"
-      process_backoff do 
+    Parallel.each(articles, progress: 'Download texts') do |article|
+      pdf_path = article_path article
+      process_backoff do
         article.full_text do |body|
           pdf = File.new pdf_path, 'w'
           pdf.write body
@@ -78,22 +109,28 @@ class MyApplication
     end
   end
 
+  # Execut block with exponential backoff
+  # @param &block [block] do http request and if http error occured,
+  #   we would retry it.
   def process_backoff(&block)
     backoff.until_success do
       begin
-        result = block.call()
+        block.call
       rescue Net::HTTPServerException
-        result = false 
+        false
       end
-      return result
     end
   end
 
+  def article_path(article)
+    directory = File.join @base_dir, article.journal_title
+    FileUtils.mkdir_p directory if Dir.exist?(directory)
+    File.join directory, "#{article.title}.pdf"
+  end
+
   def backoff
-    minimal_interval = 0.1
-    maximal_elapsed_time = 60.0
-    ExponentialBackoff.new minimal_interval, maximal_elapsed_time
+    ExponentialBackoff.new @minimal_interval, @maximal_elapsed_time
   end
 end
 
-MyApplication.new.run if $PROGRAM_NAME == __FILE__
+MathnetApplication.new.run if $PROGRAM_NAME == __FILE__

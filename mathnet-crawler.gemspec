@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
   spec.email = ['eoskin@crystalnix.com']
 
   spec.summary = 'Tool kit to operate with mathnet.ru'
-  spec.description = 'The Library provides API and CLI to operate with mathnet.ru.'
+  spec.description = 'The Library provides API and CLI to' \
+    'operate with mathnet.ru.'
   spec.homepage = 'https://github.com/EvgeneOskin/ruby-mathnet-crawler'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -38,4 +39,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop', '~> 0.34.2'
   spec.add_development_dependency 'pry', '~> 0.10'
   spec.add_development_dependency 'byebug', '~> 6.0'
+  spec.add_development_dependency 'rspec', '~> 3.3.0'
+  spec.add_development_dependency 'simplecov', '~> 0.10.0'
+  spec.add_development_dependency 'webmock', '~> 1.22.1'
+  spec.add_development_dependency 'coveralls', '~> 0.8.3'
+  spec.add_development_dependency 'yard', '~> 0.8'
 end
